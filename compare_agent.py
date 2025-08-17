@@ -1,33 +1,26 @@
-import openai
-import base64
+from openai import OpenAI
 
-def image_to_base64(img_bytes):
-    return base64.b64encode(img_bytes.read()).decode('utf-8')
-
-def get_gpt_vision_comparison(api_key, submittal_text, image_base64):
-    openai.api_key = api_key
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "You are a QAQC engineer comparing submittal specs vs equipment nameplate details."},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": f"""Compare the equipment submittal below to the nameplate shown in the image. 
-Return a markdown table showing Field, Submittal Value, Nameplate Value, and Match (✅ or ❌).
-
-Submittal:
+def get_gpt_vision_comparison(api_key, submittal_text, image_b64):
+    client = OpenAI(api_key=api_key)
+    
+    system_msg = {
+        "role": "system",
+        "content": "You are an MEP QAQC Engineer. Compare the equipment nameplate data with the technical submittal details. Output a comparison table in Markdown with fields, submittal values, image values, and match yes/no."
+    }
+    user_msg = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": f"Compare this submittal:
 {submittal_text}
 
-Only return the table. Do not explain anything else."""},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{image_base64}"
-                        }
-                    }
-                ]
-            }
+with this equipment nameplate image."},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}}
         ]
+    }
+    
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[system_msg, user_msg]
     )
+    
     return response.choices[0].message.content
