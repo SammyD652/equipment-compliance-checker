@@ -1,20 +1,18 @@
+# app.py
+import io, json, math, tempfile, pandas as pd
 import streamlit as st
-from utils import extract_text_from_pdf
-from compare_agent import image_to_base64, get_gpt_vision_comparison
+from pypdf import PdfReader
+from pdf2image import convert_from_bytes
+from openai import OpenAI
 
-st.set_page_config(page_title="Equipment Compliance Checker", layout="centered")
+client = OpenAI()
 
-st.title("🧠 Equipment vs. Submittal Compliance (GPT-4o Vision)")
+AGENT_INSTRUCTIONS = """You are the Equipment ↔ Submittal Compliance Agent. ... (paste full block here) ..."""
 
-api_key = st.text_input("🔐 Enter your OpenAI API Key", type="password")
+st.set_page_config(page_title="Equipment ↔ Submittal Compliance", layout="wide")
+st.title("Equipment ↔ Submittal Compliance Checker")
 
-uploaded_pdf = st.file_uploader("📄 Upload Technical Submittal PDF", type="pdf")
-uploaded_image = st.file_uploader("🖼️ Upload Equipment Nameplate Image", type=["jpg", "jpeg", "png"])
+pdf = st.file_uploader("Upload technical submittal PDF (large allowed)", type=["pdf"])
+nameplate_imgs = st.file_uploader("Upload nameplate images (optional)", type=["png","jpg","jpeg"], accept_multiple_files=True)
 
-if st.button("Run Comparison") and uploaded_pdf and uploaded_image and api_key:
-    with st.spinner("🔍 Analyzing..."):
-        submittal_text = extract_text_from_pdf(uploaded_pdf)
-        image_b64 = image_to_base64(uploaded_image)
-        result_table = get_gpt_vision_comparison(api_key, submittal_text, image_b64)
-        st.markdown("### ✅ Compliance Results:")
-        st.markdown(result_table)
+# (rest of code same as before)
